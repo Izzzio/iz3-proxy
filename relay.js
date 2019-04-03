@@ -65,6 +65,10 @@ candy.starwave.registerMessageHandler(MESSAGES.handshake, function (message) {
     workWithConnection(message.sender);
 });
 
+/**
+ * Work with socks connection
+ * @param address
+ */
 function workWithConnection(address) {
     let client;
     candy.starwave.registerMessageHandler(MESSAGES.newConnection, function (message) {

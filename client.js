@@ -88,7 +88,9 @@ candy.starwave.registerMessageHandler(MESSAGES.endConnection, function (message)
     socket.end();
 });
 
-
+/**
+ * Start SOCKS5
+ */
 function startServer() {
 
     var srv = socks.createServer(function (info, accept, deny) {
