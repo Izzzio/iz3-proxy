@@ -53,20 +53,28 @@ function sendMessage(to, message, messageId) {
 console.log('Starting Candy connection...');
 let candy = new Candy(NODES).start();
 
+/**
+ * Connecting Candy
+ */
 candy.onready = function () {
     console.log('Connected.');
     setTimeout(function () {
         console.log('Waiting for handshake...');
         sendMessage(RELAY_ADDRESS, {msg: 'Hello'}, MESSAGES.handshake);
     }, 1000);
-
 };
 
+/**
+ * Handshake handler
+ */
 candy.starwave.registerMessageHandler(MESSAGES.handshakeOk, function (message) {
     console.log('OK Handshake received. Starting...');
     startServer();
 });
 
+/**
+ * Income data handler
+ */
 candy.starwave.registerMessageHandler(MESSAGES.incomeData, function (message) {
     try {
         let payload = Buffer.from(message.data.data, 'hex');//utils.hexString2Uint8Array(utils.unicode2HexString(message.data.data));
@@ -76,12 +84,17 @@ candy.starwave.registerMessageHandler(MESSAGES.incomeData, function (message) {
     }
 });
 
-
+/**
+ * Remote connection handler
+ */
 candy.starwave.registerMessageHandler(MESSAGES.socketConnected, function (message) {
     let socketId = message.data.socketId;
     let socket = sockets[socketId].socket;
 });
 
+/**
+ * Ending connection handler
+ */
 candy.starwave.registerMessageHandler(MESSAGES.endConnection, function (message) {
     let socketId = message.data.socketId;
     let socket = sockets[socketId].socket;
@@ -93,12 +106,18 @@ candy.starwave.registerMessageHandler(MESSAGES.endConnection, function (message)
  */
 function startServer() {
 
+    /**
+     * Start socks server
+     */
     var srv = socks.createServer(function (info, accept, deny) {
 
         let socketId = candy.getid();
         socket = accept(true);
         sockets[socketId] = {socket: socket, id: socketId};
 
+        /**
+         * Data from client
+         */
         socket.on('data', function (data) {
             sendMessage(RELAY_ADDRESS, {
                 data: /*utils.hexString2Unicode*/(data.toString('hex')),
@@ -118,6 +137,7 @@ function startServer() {
             }, MESSAGES.endConnection);
         });
 
+        //Send new connection beacon
         sendMessage(RELAY_ADDRESS, {
             port: info.dstPort,
             address: info.dstAddr,
@@ -125,6 +145,7 @@ function startServer() {
         }, MESSAGES.newConnection);
 
     });
+
     srv.listen(PROXY_PORT, PROXY_HOST, function () {
         console.log('SOCKSv5 server listening on ', PROXY_HOST, PROXY_PORT);
     });

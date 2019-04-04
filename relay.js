@@ -59,6 +59,9 @@ candy.onready = function () {
     console.log('Waiting for handshakes');
 };
 
+/**
+ * Handshake handler
+ */
 candy.starwave.registerMessageHandler(MESSAGES.handshake, function (message) {
     //console.log('Incoming connection from', message.sender);
     sendMessage(message.sender, {msg: 'Hello'}, MESSAGES.handshakeOk);
@@ -71,22 +74,23 @@ candy.starwave.registerMessageHandler(MESSAGES.handshake, function (message) {
  */
 function workWithConnection(address) {
     let client;
+
+    /**
+     * New connection handler
+     */
     candy.starwave.registerMessageHandler(MESSAGES.newConnection, function (message) {
         if(message.sender === address) {
             try {
                 let port = message.data.port;
                 let remoteAddress = message.data.address;
-                //console.log('Outcoming connection to', remoteAddress, port);
 
                 client = new net.Socket();
                 sockets[message.data.socketId] = {socket: client, id: message.data.socketId};
-                //console.log('NEW SOCKET CREATED', message.data.socketId);
 
                 client.connect(port, remoteAddress, function () {
                     sendMessage(address, {
                         socketId: message.data.socketId
                     }, MESSAGES.socketConnected);
-                    //console.log('Connected to', remoteAddress);
                 });
 
                 client.on('end', function () {
@@ -96,14 +100,12 @@ function workWithConnection(address) {
                 });
 
                 client.on('error', function (err) {
-                    //console.log(err);
                     sendMessage(address, {
                         socketId: message.data.socketId
                     }, MESSAGES.endConnection);
                 });
 
                 client.on('data', function (data) {
-                    //console.log('INCOME DATA', data);
                     sendMessage(address, {
                         data: /*utils.hexString2Unicode*/(data.toString('hex')),
                         socketId: message.data.socketId
@@ -117,13 +119,13 @@ function workWithConnection(address) {
         return false;
     });
 
+    /**
+     * Outcoming data handler
+     */
     candy.starwave.registerMessageHandler(MESSAGES.outcomeData, function (message) {
         if(message.sender === address) {
             try {
                 let payload = Buffer.from(message.data.data, 'hex');//utils.hexString2Uint8Array(utils.unicode2HexString(message.data.data));
-                //console.log('OUTCOME DATA', Buffer.from(payload).toString());
-                //console.log("WRITING DATA TO", message.data.socketId);
-                //console.log("WRITING DATA TO", sockets[message.data.socketId].socket);
                 sockets[message.data.socketId].socket.write(Buffer.from(payload));
             } catch (e) {
                 console.log(e);
@@ -133,6 +135,9 @@ function workWithConnection(address) {
         return false;
     });
 
+    /**
+     * Ending connection handler
+     */
     candy.starwave.registerMessageHandler(MESSAGES.endConnection, function (message) {
         if(message.sender === address) {
             let socketId = message.data.socketId;
