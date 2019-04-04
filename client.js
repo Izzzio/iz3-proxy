@@ -21,6 +21,9 @@ const NODES = ["ws://176.9.104.200:6031"];
 const PROXY_HOST = 'localhost';
 const PROXY_PORT = 1080;
 
+const PROXY_USER = 'user';
+const PROXY_PASSWORD = 'password';
+
 //************************************
 const socks = require('socksv5');
 const net = require('net');
@@ -150,8 +153,12 @@ function startServer() {
         console.log('SOCKSv5 server listening on ', PROXY_HOST, PROXY_PORT);
     });
 
-    srv.useAuth(socks.auth.None());
-    //srv.useAuth();
-
+    if(PROXY_PASSWORD.length > 0) {
+        srv.useAuth(socks.auth.UserPassword(function (user, password, cb) {
+            cb(user === PROXY_USER && password === PROXY_PASSWORD);
+        }));
+    } else {
+        srv.useAuth(socks.auth.None());
+    }
 }
 
